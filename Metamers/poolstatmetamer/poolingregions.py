@@ -30,6 +30,8 @@ import imageblends as blend
 import imagefilters as filters
 from typing import NamedTuple, Optional
 from image_utils import plot_image
+import matplotlib.pyplot as plt
+import numpy as np
 
 # This class specifies the parameters for pooling regions such as width, kernel type, etc.
 # Can be used to generate corresponding pooling kernels
@@ -724,10 +726,42 @@ def _testcircular():
         k = Trigezoid(4,pad_mode=pm)
         plot_image(k.pool_stats(image,image.size()),title=pm)
     
-    
-  
-if __name__ == "__main__":   # execute main() only if run as a script
-    _testmain()
-#    _testcircular()
+def plot_image(image, title=None, cmap='viridis'):
+    if torch.is_tensor(image):
+        image = image.squeeze().detach().cpu().numpy()
+    plt.imshow(image, cmap=cmap)
+    if title:
+        plt.title(title)
+    plt.axis('off')
+
+
+def visualize_pooling(original_image, pooled_image, pooling_params):
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Plot original image
+    ax[0].imshow(original_image.squeeze().detach().cpu().numpy(), cmap='gray')
+    ax[0].set_title('Original Image')
+    ax[0].axis('off')
+
+    # Plot pooled image
+    pooled_image_resized = torch.nn.functional.interpolate(
+        pooled_image, size=original_image.shape[-2:], mode='nearest'
+    ).squeeze().detach().cpu().numpy()
+
+    ax[1].imshow(original_image.squeeze().detach().cpu().numpy(), cmap='gray')
+    ax[1].imshow(pooled_image_resized, cmap='jet', alpha=0.5)  # Overlay pooled image
+    ax[1].set_title('Pooled Image Overlay')
+    ax[1].axis('off')
+
+    plt.show()
+
+
+if __name__ == "__main__":
+    original_image = torch.rand(1, 1, 128, 256)
+    pooling_params = PoolingParams(32, kernel='trap', stride_fraction=1 / 4)
+    pooling = pooling_params.to_pooling()
+    pooled_image = pooling.pool_stats(original_image, original_image.size())
+
+    visualize_pooling(original_image, pooled_image, pooling_params)
     
     

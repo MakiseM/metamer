@@ -116,23 +116,22 @@ class MetamerStatistics(torch.nn.Module):
 #                                 'phase_correlation':100}
 
 
-        self.category_weights = {'mean':0, 'variance': 0, 'skew': 0, 'kurtosis': 0,
-                                 'bandpass_variance': 0,
-                                 'autocorrelation': 0,
-                                 'edge_mean': 0, 'edge_variance': 0, 'edge_kurtosis': 0,
-                                 'edge_autocorrelation': 0, 'edge_correlation': 0, 'edge_stop': 0, 'edge_continue': 0,
-                                 'phase_correlation': 0,
-                                 'covariance': 0, 'edge_covariance': 0,
-                                 'phase_covariance': 0,
+        self.category_weights = {'mean':6, 'variance':1, 'skew':1, 'kurtosis':1, 'bandpass_variance':40,
+                                 'autocorrelation':0.5,
+                                 'edge_mean':35, 'edge_variance':80, 'edge_kurtosis':800,
+                                 'edge_autocorrelation':2, 'edge_correlation':80, 'edge_stop':100, 'edge_continue':80,
+                                 'phase_correlation':600,
+                                 'covariance':1, 'edge_covariance':80,
+                                 'phase_covariance':400,
                                  }
-        if os.path.exists(self.data_file):
-            self.read_weights_from_file()
-        else:
-            self.fill_random_weights()
-            self.save_weights_to_file()
+        #if os.path.exists(self.data_file):
+        #     self.read_weights_from_file()
+        #else:
+        #    self.fill_random_weights()
+        #    self.save_weights_to_file()
 
-        self.fill_random_weights()
-        self.save_weights_to_file()
+        #self.fill_random_weights()
+        #self.save_weights_to_file()
 
     def fill_random_weights(self):
         if self.category_weights['mean'] == 0:
@@ -141,8 +140,8 @@ class MetamerStatistics(torch.nn.Module):
             self.category_weights['bandpass_variance'] = random.randint(0, 100)
         if self.category_weights['edge_mean'] == 0:
             self.category_weights['edge_mean'] = random.randint(0, 100)
-        if self.category_weights['phase_correlation'] == 0:
-            self.category_weights['phase_correlation'] = random.randint(0, 1000)
+        if self.category_weights['phase_covariance'] == 0:
+            self.category_weights['phase_covariance'] = random.randint(0, 1000)
 
     def save_weights_to_file(self):
         with open(self.data_file, 'w') as f:
@@ -265,26 +264,26 @@ class GrayscaleStatistics(MetamerStatistics):
         # Classes of statistics to include (or not if set to false)
         self.stat_mean = True                         # We use mean of base image, but this also controls mean of the low-pass images
         self.stat_base_variance = True
-        self.stat_base_skewkurtosis = False
+        self.stat_base_skewkurtosis = True
 #        self.stat_high_variance = True
         self.stat_bandpass_variance = True            # Generalization of old high_variance statistic    
 #        self.stat_high_variance_to_zero = False       # Not actually a statistic, but option to try to force high-pass to zero in metamer
         self.stat_low_variance = True                 # Note we include variance here rather than in autocorrelation
         self.stat_low_skewkurtosis = True                
-        self.stat_low_autocorrelation = False         # We turned off autocorrelations by default  bw:4/2020
+        self.stat_low_autocorrelation = True         # We turned off autocorrelations by default  bw:4/2020
         self.stat_edge_mean = True                    # Not in the Portilla&Simoncelli statistics but in Freeman's
         self.stat_edge_variance = True                # We include variance separately from autocorrelation
-        self.stat_edge_kurtosis = False                # Not in Freeman's or Portilla&Simoncelli's statistics
-        self.stat_edge_autocorrelation = False        # We turned off autocorrelations by default  bw:4/2020
+        self.stat_edge_kurtosis = True                # Not in Freeman's or Portilla&Simoncelli's statistics
+        self.stat_edge_autocorrelation = True        # We turned off autocorrelations by default  bw:4/2020
         self.stat_edge_orientationcorrelation = True
         self.stat_edge_scalecorrelation = True       
-        self.stat_edge_scaleorientationcorrelation = False # Separated from edge_scalecorrelation and turned off by default bw:8/2020
+        self.stat_edge_scaleorientationcorrelation = True # Separated from edge_scalecorrelation and turned off by default bw:8/2020
         # edge_stop is an experimental new statistic currently being tested
         self.stat_edge_stop = True
-        self.stat_edge_continue = False   #experimental new statistics
+        self.stat_edge_continue = True   #experimental new statistics
         self.stat_phase_orientationcorrelation = True     # Not in Portilla statistics but in Freeman's (off by default bw:8/2020, renabled 12/2021, helps text tests)
         self.stat_phase_scalecorrelation = True
-        self.stat_phase_scaleorientationcorrelation = False # Separated from phase_scalecorrelation and turned off by default bw:8/2020
+        self.stat_phase_scaleorientationcorrelation = True # Separated from phase_scalecorrelation and turned off by default bw:8/2020
         
         # Some named groups of statistics for convenience
         self.named_stat_groups = { 
@@ -308,7 +307,11 @@ class GrayscaleStatistics(MetamerStatistics):
                  'autocorrelation_stats':('low_autocorrelation','edge_autocorrelation'),
                  'skewkurtosis_stats':('base_skewkurtosis','low_skewkurtosis'),
                 # categories based on statistics type
-                 'Metamer':('mean','edge_mean','bandpass_variance','phase_scaleorientationcorrelation')
+                 'Metamer':('mean','edge_mean','phase_scalecorrelation'),
+                 'test': ('mean','phase_scalecorrelation','phase_scaleorientationcorrelation','phase_orientationcorrelation','edge_orientationcorrelation','edge_scalecorrelation','edge_scaleorientationcorrelation'),
+                 'Full': ('mean','base_variance','bandpass_variance',
+                          'edge_mean','edge_variance','edge_scaleorientationcorrelation',
+                          'phase_scaleorientationcorrelation','edge_stop')
                  }
         
     def set_for_portilla_statistics(self):
